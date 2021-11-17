@@ -11,6 +11,11 @@ model/ckpt/dde_cnn.pth.tar
 .opennre/pretrain/nre/dde_cnn.pth.tar
 .opennre/pretrain/nre/wiki80_cnn_softmax.pth.tar
 pretrain/bert-base-uncased/pytorch_model.bin
+.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar
+data/nyt10
+model/ckpt/dde_bert-base-uncased_entity.pth.tar
+pretrain/glove/glove.6B.50d_mat.npy
+pretrain/glove/glove.6B.50d_word2id.json
 
 __pycache__/
 *.py[cod]
