@@ -134,7 +134,7 @@ class BagREDataset(data.Dataset):
         self.bag_size = bag_size
 
         # Load the file
-        f = open(path)
+        f = open(path, encoding='utf-8')
         self.data = []
         for line in f:
             line = line.rstrip()

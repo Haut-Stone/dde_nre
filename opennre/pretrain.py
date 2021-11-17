@@ -1,6 +1,5 @@
-from . import encoder
-from . import model
-from . import framework
+from opennre import encoder
+from opennre import model
 import torch
 import os
 import sys
@@ -9,7 +8,7 @@ import numpy as np
 import logging
 
 root_url = "https://thunlp.oss-cn-qingdao.aliyuncs.com/opennre/pretrain/nre/wiki80_cnn_softmax.pth.tar"
-default_root_path = os.path.join('D:\核心代码\\OpenNRE-master', '.opennre')
+default_root_path = os.path.join('D:\核心代码\\dde_nre', '.opennre')
 
 def check_root(root_path=default_root_path):
     if not os.path.exists(root_path):
@@ -157,6 +156,19 @@ def get_model(model_name, root_path=default_root_path):
         else:
             sentence_encoder = encoder.BERTEncoder(
                 max_length=80, pretrain_path=os.path.join(root_path, 'pretrain/bert-base-uncased'))
+        m = model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
+        m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
+        return m
+    elif model_name in ['dde_bert-base-uncased_entity']:  # todo 达到了 60 % 的准确率，效果非常的显著。
+        pre_path = '..'
+        rel2id = json.load(open(os.path.join(pre_path, 'data/dde/dde_rel2id.json')))
+        if 'entity' in model_name:
+            sentence_encoder = encoder.BERTEntityEncoder(
+                max_length=80,
+                pretrain_path=os.path.join(pre_path, 'pretrain/bert-base-uncased'))  # 如果是使用 bert 的话则是直接使用 bert
+        else:
+            sentence_encoder = encoder.BERTEncoder(
+                max_length=80, pretrain_path=os.path.join(pre_path, 'pretrain/bert-base-uncased'))
         m = model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)
         m.load_state_dict(torch.load(ckpt, map_location='cpu')['state_dict'])
         return m

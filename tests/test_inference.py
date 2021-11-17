@@ -1,6 +1,7 @@
 import unittest
 import opennre
 import json
+import shutil
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
 
@@ -17,7 +18,10 @@ line_count = 414
 class TestInference(unittest.TestCase):
 
     def test_wiki80_cnn_softmax(self):
-        model = opennre.get_model('dde_cnn')  # 使用 dde cnn 来训练数据
+        # TODO 测试时这里 get_model 中的路径有很多坑，要注意！！！！，每次运行前，记得把模型拷到 .opennre 文件夹中的对应位置。
+        model_name = 'dde_bert-base-uncased_entity'
+        shutil.copy('../model/ckpt/dde_bert-base-uncased_entity.pth.tar', '../.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar')
+        model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
         sens = []
         with open('../data/dde/dde_val.txt', encoding='utf-8') as f:
             for i in range(line_count):
