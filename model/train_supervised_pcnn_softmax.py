@@ -1,0 +1,155 @@
+# coding:utf-8
+import torch
+import numpy as np
+import json
+import opennre
+from opennre import encoder, model, framework
+import sys
+import os
+import argparse
+import logging
+import random
+
+
+def set_seed(seed):  # 设置一个随机种子
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+
+
+parser = argparse.ArgumentParser()  # 分析传入的一些训练参数
+parser.add_argument('--ckpt', default='',  # 传入已经训练好的模型
+        help='Checkpoint name')
+parser.add_argument('--only_test', action='store_true',  # 只对运行 test 数据
+        help='Only run test')
+parser.add_argument('--encoder', default='pcnn', choices=['pcnn', 'cnn'])  # 使用 pcnn 编码器
+
+# Data
+parser.add_argument('--metric', default='micro_f1', choices=['micro_f1', 'acc'],  # 通过 f1 值或准确率确定最好的模型
+        help='Metric for picking up best checkpoint')
+parser.add_argument('--dataset', default='none', choices=['none', 'semeval', 'wiki80', 'tacred', 'dde'],  # 是否有已经有的数据集
+        help='Dataset. If not none, the following args can be ignored')
+parser.add_argument('--train_file', default='', type=str,  # 没有的话填入自己的训练数据，训练集
+        help='Training data file')
+parser.add_argument('--val_file', default='', type=str,  # 验证集
+        help='Validation data file')
+parser.add_argument('--test_file', default='', type=str,  # 测试集
+        help='Test data file')
+parser.add_argument('--rel2id_file', default='', type=str,  # 关系和 id 的对应文件
+        help='Relation to ID file')
+
+# Hyper-parameters
+parser.add_argument('--batch_size', default=200, type=int,  # 批大小
+        help='Batch size')
+parser.add_argument('--lr', default=1e-1, type=float,  # 学习率
+        help='Learning rate')
+parser.add_argument('--weight_decay', default=1e-5, type=float,  # 权重衰减
+        help='Weight decay')
+parser.add_argument('--max_length', default=500, type=int,  # 最大的句子长度，根据数据集确定
+        help='Maximum sentence length')
+parser.add_argument('--max_epoch', default=200, type=int,  # 最大的训练轮数
+        help='Max number of training epochs')
+
+# Others
+parser.add_argument('--seed', default=42, type=int,  # 随机种子
+        help='Random seed')
+
+args = parser.parse_args()
+
+# Set random seed
+set_seed(args.seed)
+
+# Some basic settings
+if not os.path.exists('ckpt'):
+    os.mkdir('ckpt')
+if len(args.ckpt) == 0:  # 如果没有找到已有的模型，那么新建一个文件夹保存训练的模型，以数据集名称和使用的方法命名
+    args.ckpt = '{}_{}'.format(args.dataset, 'cnn')
+ckpt = 'ckpt/{}.pth.tar'.format(args.ckpt)
+
+if args.dataset != 'none':  # 如果是已经有现存的数据集，那么要下载数据集
+    args.train_file = '../data/dde/dde_train.txt'  # 载入数据集
+    args.val_file = '../data/dde/dde_val.txt'
+    print(args.val_file)
+    args.test_file = '../data/dde/dde_test.txt'
+    args.rel2id_file = '../data/dde/dde_rel2id.json'
+    if args.dataset == 'wiki80':
+        args.metric = 'acc'  # wiki80 数据集以准确度为标注
+    else:
+        args.metric = 'micro_f1'  # 其他数据集以f1值为标注
+else:
+    if not (os.path.exists(args.train_file) and os.path.exists(args.val_file) and os.path.exists(args.test_file) and os.path.exists(args.rel2id_file)):  # 没有找到数据集
+        raise Exception('--train_file, --val_file, --test_file and --rel2id_file are not specified or files do not exist. Or specify --dataset')
+
+logging.info('Arguments:')  # 打印我们输入的参数
+for arg in vars(args):
+    logging.info('    {}: {}'.format(arg, getattr(args, arg)))
+
+rel2id = json.load(open(args.rel2id_file))  # 载入关系到词向量的文件
+
+word2id = json.load(open('../.opennre/pretrain/glove/glove.6B.50d_word2id.json', encoding='utf-8'))  # 词和id的转换
+word2vec = np.load('../.opennre/pretrain/glove/glove.6B.50d_mat.npy')  # 词向量
+
+# Define the sentence encoder
+if args.encoder == 'pcnn':  # 设置默认的编码器，一般来说还是使用pcnn多一些，这里给了一些优秀的参数，也可以根据实际的情况进行一个调整
+    sentence_encoder = opennre.encoder.PCNNEncoder(
+        token2id=word2id,
+        max_length=args.max_length,
+        word_size=50,
+        position_size=5,
+        hidden_size=230,
+        blank_padding=True,
+        kernel_size=3,
+        padding_size=1,
+        word2vec=word2vec,
+        dropout=0.5
+    )
+elif args.encoder == 'cnn':
+    sentence_encoder = opennre.encoder.CNNEncoder(
+        token2id=word2id,
+        max_length=args.max_length,
+        word_size=50,
+        position_size=5,
+        hidden_size=230,
+        blank_padding=True,
+        kernel_size=3,
+        padding_size=1,
+        word2vec=word2vec,
+        dropout=0.5
+    )
+else:
+    raise NotImplementedError
+
+# Define the model
+model = opennre.model.SoftmaxNN(sentence_encoder, len(rel2id), rel2id)  # 为模型设置编码器和最后的分类 id
+
+# Define the whole training framework
+framework = opennre.framework.SentenceRE(  # 设置整个参数文件
+    train_path=args.train_file,
+    val_path=args.val_file,
+    test_path=args.test_file,
+    model=model,
+    ckpt=ckpt,
+    batch_size=args.batch_size,
+    max_epoch=args.max_epoch,
+    lr=args.lr,
+    weight_decay=args.weight_decay,
+    opt='sgd',
+)
+
+# Train the model
+if not args.only_test:  # 如果不是只进行test，那么框架对模型选择合适的评测标准对模型进行一个训练
+    framework.train_model(args.metric)
+
+# Test
+framework.load_state_dict(torch.load(ckpt)['state_dict'])
+result = framework.eval_model(framework.test_loader)  # 对模型进行测试
+
+# Print the result
+logging.info('Test set results:')  # 打印训练结果
+if args.metric == 'acc':
+    logging.info('Accuracy: {}'.format(result['acc']))  # 准确率
+else:
+    logging.info('Micro precision: {}'.format(result['micro_p']))
+    logging.info('Micro recall: {}'.format(result['micro_r']))  # 召回率
+    logging.info('Micro F1: {}'.format(result['micro_f1']))  # f1 值
