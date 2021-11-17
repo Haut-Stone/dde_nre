@@ -23,7 +23,7 @@ class TestInference(unittest.TestCase):
         shutil.copy('../model/ckpt/dde_bert-base-uncased_entity.pth.tar', '../.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar')
         model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
         sens = []
-        with open('../data/dde/dde_val.txt', encoding='utf-8') as f:
+        with open('../data/dde/dde_test.txt', encoding='utf-8') as f:
             for i in range(line_count):
                 print(i)
                 foo = eval(f.readline())
