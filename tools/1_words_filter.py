@@ -36,6 +36,7 @@ def data_filter(name):
 
 
 nodeset = set()
+links_dict = dict()
 nodes_dict = dict()
 nodes = []
 links = []
@@ -93,7 +94,7 @@ for data in rows_rel:
     a = data['h']['name'] + '@@@' + data['h']['type']
     b = data['t']['name'] + '@@@' + data['t']['type']
 
-    if nodes_dict[a]['symbolSize'] <= 40:
+    if nodes_dict[a]['symbolSize'] <= 40:  # 对重复的节点提高节点的大小
         nodes_dict[a]['symbolSize'] += 3
     if nodes_dict[b]['symbolSize'] <= 40:
         nodes_dict[b]['symbolSize'] += 3
@@ -102,14 +103,22 @@ for data in rows_rel:
         'source': nodes_dict[a]['id'],
         'target': nodes_dict[b]['id'],
         'value': data['relation'],
+        'lineStyle': {
+            'width': 1
+        },
         'label': {
             'formatter': '{c}'
         }
     }
-    links.append(link)
+    if link['source'] + '@@@' + link['target'] + '@@@' + link['value'] not in links_dict:  # 对重复的关系提高线的宽度
+        links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']] = link
+    else:
+        links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width'] += 1
 
 for key, value in nodes_dict.items():
     nodes.append(value)
+for key, value in links_dict.items():
+    links.append(value)
 
 echart_data = {
     'nodes': nodes,
