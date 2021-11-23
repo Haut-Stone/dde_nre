@@ -97,7 +97,10 @@ for data in rows_rel:
     link = {
         'source': nodes_dict[a]['id'],
         'target': nodes_dict[b]['id'],
-        'name': data['relation']
+        'value': data['relation'],
+        'label': {
+            'formatter': '{c}'
+        }
     }
     links.append(link)
 
