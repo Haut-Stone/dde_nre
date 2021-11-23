@@ -79,7 +79,7 @@ for item in nodeset:
     node = {
         'name': item[0],
         'category': cate_map[item[1]],
-        'symbolSize': 1,
+        'symbolSize': 10,
         'id': str(counter),
         'x': random.random()*1200,
         'y': random.random()*800,
@@ -92,8 +92,8 @@ for item in nodeset:
 for data in rows_rel:
     a = data['h']['name'] + '@@@' + data['h']['type']
     b = data['t']['name'] + '@@@' + data['t']['type']
-    nodes_dict[a]['symbolSize'] += 1
-    nodes_dict[b]['symbolSize'] += 1
+    nodes_dict[a]['symbolSize'] += 3
+    nodes_dict[b]['symbolSize'] += 3
     link = {
         'source': nodes_dict[a]['id'],
         'target': nodes_dict[b]['id'],
