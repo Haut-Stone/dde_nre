@@ -92,8 +92,12 @@ for item in nodeset:
 for data in rows_rel:
     a = data['h']['name'] + '@@@' + data['h']['type']
     b = data['t']['name'] + '@@@' + data['t']['type']
-    nodes_dict[a]['symbolSize'] += 3
-    nodes_dict[b]['symbolSize'] += 3
+
+    if nodes_dict[a]['symbolSize'] <= 40:
+        nodes_dict[a]['symbolSize'] += 3
+    if nodes_dict[b]['symbolSize'] <= 40:
+        nodes_dict[b]['symbolSize'] += 3
+
     link = {
         'source': nodes_dict[a]['id'],
         'target': nodes_dict[b]['id'],
