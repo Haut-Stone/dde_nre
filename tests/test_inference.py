@@ -12,7 +12,7 @@ ws = wb['Sheet']
 ws1 = wb['分类准确率，召回率，f1值']
 data = [[0, 0, 0, 0] for _ in range(9)]
 red_fill = PatternFill("solid", fgColor="CCCCFF")  # 单元格填充颜色
-line_count = 414
+line_count = 482
 
 
 class TestInference(unittest.TestCase):

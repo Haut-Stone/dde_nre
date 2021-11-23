@@ -53,13 +53,13 @@ parser.add_argument('--rel2id_file', default='', type=str,
                     help='Relation to ID file')
 
 # Hyper-parameters
-parser.add_argument('--batch_size', default=60, type=int,  # 这里原始的值是64显卡吃不下
+parser.add_argument('--batch_size', default=30, type=int,  # 这里原始的值是64显卡吃不下
                     help='Batch size')
 parser.add_argument('--lr', default=2e-5, type=float,
                     help='Learning rate')
-parser.add_argument('--max_length', default=128, type=int,
+parser.add_argument('--max_length', default=160, type=int,  # 默认是128
                     help='Maximum sentence length')
-parser.add_argument('--max_epoch', default=10, type=int,  # 默认是 3
+parser.add_argument('--max_epoch', default=40, type=int,  # 默认是 3
                     help='Max number of training epochs')
 
 # Seed
