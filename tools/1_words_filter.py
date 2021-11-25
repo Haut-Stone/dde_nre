@@ -2,7 +2,7 @@ import json
 import csv
 import random
 
-json_file = json.load(open('./检查用/relation.json'))
+json_file = json.load(open('./检查用/neo4j_use_relation.json'))
 
 rows_rel = []
 rel_pair = set()
@@ -70,8 +70,8 @@ for data in json_file:  # 这里去做一个过滤后数据的生成，添加一
     data['t']['name'] = data_filter(data['t']['name'])
     rows_rel.append(data)
 
-    node1 = (data['h']['name'], data['h']['type'])
-    node2 = (data['t']['name'], data['t']['type'])
+    node1 = (data['h']['name'], data['h']['type'].split('_')[-1])
+    node2 = (data['t']['name'], data['t']['type'].split('_')[-1])
     nodeset.add(node1)
     nodeset.add(node2)
 
@@ -91,8 +91,8 @@ for item in nodeset:
     print(item[0] + '@@@' + item[1])
 
 for data in rows_rel:
-    a = data['h']['name'] + '@@@' + data['h']['type']
-    b = data['t']['name'] + '@@@' + data['t']['type']
+    a = data['h']['name'] + '@@@' + data['h']['type'].split('_')[-1]
+    b = data['t']['name'] + '@@@' + data['t']['type'].split('_')[-1]
 
     if nodes_dict[a]['symbolSize'] <= 40:  # 对重复的节点提高节点的大小
         nodes_dict[a]['symbolSize'] += 3
