@@ -1,6 +1,7 @@
 import json
 import csv
 import random
+import nltk.stem as ns
 
 
 class WordFilter:
@@ -41,29 +42,25 @@ class WordFilter:
 
     @staticmethod
     def data_filter(name):
-        name1 = name.replace('Apatite', 'apatite')
-        name1 = name1.replace('Apa - tites', 'apatite')
-        name1 = name1.replace('Apatites', 'apatite')
-        name1 = name1.replace('apatites', 'apatite')
-        name1 = name1.replace('apa - tites', 'apatite')
-        name1 = name1.replace('MORs', 'MOR')
-        name1 = name1.replace('PCD forma - tion', 'PCD formation')
-        name1 = name1.replace('PCDs', 'PCD')
-        name1 = name1.replace('REEs', 'REE')
-        name1 = name1.replace('W skarns', 'W skarn')
-        name1 = name1.replace('magmatic arcs', 'magmatic arc')
-        name1 = name1.replace('porphy - ries', 'porphyry')
-        name1 = name1.replace('porphyries', 'porphyry')
-        name1 = name1.replace('High', 'high')
-        name1 = name1.replace('Low', 'low')
-        name1 = name1.replace('car - bonatites', 'carbonatites')
-        name1 = name1.replace('carbon - atites', 'carbonatites')
-        name1 = name1.replace('high - est', 'highest')
-        name1 = name1.replace('oxy - gen', 'oxygen')
-        name1 = name1.replace('por - phyry', 'porphyry')
-        name1 = name1.replace('unmineral - ized', 'unmineralized')
-        name1 = name1.replace('low - est', 'lowest')
-        # name1 = name1.replace('', '')
+        """
+        进行一些实体节点的过滤，保证同义节点均合并在一起
+        主要去除名词大小写，单复数，时态
+        """
+
+        # 解决单复数
+        print(name)
+        words = name.split()
+        lemmatizer = ns.WordNetLemmatizer()
+        for i in range(len(words)):
+            words[i] = lemmatizer.lemmatize(words[i], pos='n')
+            words[i] = lemmatizer.lemmatize(words[i], pos='v')
+            # words[i] = lemmatizer.lemmatize(words[i], pos='a')  # 形容词
+            # words[i] = lemmatizer.lemmatize(words[i], pos='r')  # 副词
+        name1 = ' '.join(words)
+        print(name1)
+
+        # 解决首字母大小写
+        name1 = name1.capitalize()
         return name1
 
     def gen_echart_data(self):
@@ -90,7 +87,7 @@ class WordFilter:
             }
             counter += 1
             self.nodes_dict[item[0] + '@@@' + item[1]] = node
-            print(item[0] + '@@@' + item[1])
+            # print(item[0] + '@@@' + item[1])
 
         for data in self.rows_rel:
             a = data['h']['name'] + '@@@' + data['h']['type'].split('_')[-1]
@@ -135,6 +132,22 @@ class WordFilter:
             json.dump(self.rows_rel, f)
 
 
+    def save_ins_dict(self):
+        """
+        将所有的实体全部保存下来用来，检查去重
+        """
+        header = ['ins', 'type']
+        res = []
+        for item in self.nodeset:
+            res.append(item)
+        with open('./检查用/echart_ins_set.csv', 'w', encoding='utf-8', newline='') as f:
+            f_csv = csv.writer(f)
+            f_csv.writerow(header)
+            f_csv.writerows(res)
+
+
 if __name__ == '__main__':
     a = WordFilter()
+    # a.data_filter('is')
     a.gen_echart_data()
+    a.save_ins_dict()
