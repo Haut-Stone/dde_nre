@@ -12,10 +12,50 @@ ws = wb['Sheet']
 ws1 = wb['分类准确率，召回率，f1值']
 data = [[0, 0, 0, 0] for _ in range(9)]
 red_fill = PatternFill("solid", fgColor="CCCCFF")  # 单元格填充颜色
-line_count = 482
 
 
 class TestInference(unittest.TestCase):
+
+    def test_predict(self):
+        model_name = 'dde_bert-base-uncased_entity'
+        shutil.copy('../model/ckpt/dde_bert-base-uncased_entity.pth.tar',
+                    '../.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar')
+        model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
+        sens = []
+        with open('../tools/模型用/关系预测数据.txt', encoding='utf-8') as f:
+            while True:
+                temp = f.readline()
+                if not temp:
+                    break
+                foo = eval(temp)
+                line = json.dumps(foo)
+                sens.append(json.loads(line))
+
+        predict_result = []
+        for sen in sens:
+            result = model.infer(sen)
+            print('识别句子：', ' '.join(sen['token']))
+            print('实际关系三元组：', sen['h']['name'] + ' / ' + sen['t']['name'] + ' / ' + sen['relation'])
+            print('预测关系和概率：', result)
+            result = {
+                'token': sen['token'],
+                'h': {
+                    'name': sen['h']['name'],
+                    'pos': sen['h']['pos'],
+                    'type': sen['h']['type']
+                },
+                't': {
+                    'name': sen['t']['name'],
+                    'pos': sen['t']['pos'],
+                    'type': sen['t']['type']
+                },
+                'relation': result[0]
+            }
+            predict_result.append(result)
+
+        with open('../tools/out_data/predict_result.json', 'w', encoding='utf-8') as f:
+            json.dump(predict_result, f)
+            f.close()
 
     def test_wiki80_cnn_softmax(self):
         # TODO 测试时这里 get_model 中的路径有很多坑，要注意！！！！，每次运行前，记得把模型拷到 .opennre 文件夹中的对应位置。
@@ -24,9 +64,11 @@ class TestInference(unittest.TestCase):
         model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
         sens = []
         with open('../data/dde/dde_test.txt', encoding='utf-8') as f:
-            for i in range(line_count):
-                print(i)
-                foo = eval(f.readline())
+            while True:
+                temp = f.readline()
+                if not temp:
+                    break
+                foo = eval(temp)
                 line = json.dumps(foo)
                 sens.append(json.loads(line))
         row = 1

@@ -6,8 +6,8 @@ import nltk.stem as ns
 
 class WordFilter:
 
-    def __init__(self):
-        self.json_file = json.load(open('./检查用/neo4j_use_relation.json'))
+    def __init__(self, file_path):
+        self.json_file = json.load(open(file_path))
         self.rows_rel = []
         self.rel_pair = set()
         self.nodeset = set()
@@ -189,6 +189,7 @@ class WordFilter:
 
 
 if __name__ == '__main__':
-    a = WordFilter()
+    # a = WordFilter('./检查用/neo4j_use_relation.json')
+    a = WordFilter('./out_data/predict_result.json')
     a.gen_echart_data()
     a.save_ins_dict()
