@@ -15,6 +15,8 @@ class WordFilter:
         self.nodes_dict = dict()
         self.nodes = []
         self.links = []
+        self.node_change_map = dict()
+        self.node_type_dict = dict()
         self.cate_map = {
             'ROCK': 0,
             'TECT': 1,
@@ -48,56 +50,94 @@ class WordFilter:
         """
 
         # 解决单复数
-        print(name)
+        # print(name)
         words = name.split()
         lemmatizer = ns.WordNetLemmatizer()
         for i in range(len(words)):
             words[i] = lemmatizer.lemmatize(words[i], pos='n')
-            words[i] = lemmatizer.lemmatize(words[i], pos='v')
+            # words[i] = lemmatizer.lemmatize(words[i], pos='v')
             # words[i] = lemmatizer.lemmatize(words[i], pos='a')  # 形容词
             # words[i] = lemmatizer.lemmatize(words[i], pos='r')  # 副词
         name1 = ' '.join(words)
-        print(name1)
+        # print(name1)
 
         # 解决首字母大小写
         name1 = name1.capitalize()
         return name1
 
+    def data_joiner(self, node):
+        """
+        对不同类型同名实体进行归并
+        """
+        if node['name'] not in self.node_type_dict:
+            self.node_type_dict[node['name']] = [{'type': node['type'], 'num': 1}]
+        else:
+            have = False
+            for item in self.node_type_dict[node['name']]:
+                if item['type'] == node['type']:
+                    have = True
+                    item['num'] += 1
+                    break
+            if not have:
+                self.node_type_dict[node['name']].append({'type': node['type'], 'num': 1})
+
     def gen_echart_data(self):
         for data in self.json_file:  # 这里去做一个过滤后数据的生成，添加一些echart中要用到的参数。
-            data['h']['name'] = self.data_filter(data['h']['name'])
+            data['h']['name'] = self.data_filter(data['h']['name']) # 替换成正确的名称和类型
             data['t']['name'] = self.data_filter(data['t']['name'])
-            self.rows_rel.append(data)
+            data['h']['type'] = data['h']['type'].split('_')[-1]
+            data['t']['type'] = data['t']['type'].split('_')[-1]
+            self.data_joiner(data['h'])  # 统计同名不同类实体
+            self.data_joiner(data['t'])
 
-            node1 = (data['h']['name'], data['h']['type'].split('_')[-1])
-            node2 = (data['t']['name'], data['t']['type'].split('_')[-1])
+        for key, values in self.node_type_dict.items():  # 对于每一个实体名称 例如 Cu
+            max_num_type = ''
+            max_num = -1
+            all_num = 0
+            for node_type in values:  # 对于Cu出现的所有类
+                all_num += node_type['num']
+                if node_type['num'] > max_num:
+                    max_num = node_type['num']
+                    max_num_type = node_type['type']
+            pre = key + '@@@'
+            for node_type in values:
+                self.node_change_map[pre + node_type['type']] = pre + max_num_type
+
+        for data in self.json_file:
+            name1 = data['h']['name']
+            type1 = data['h']['type']
+            name2 = data['t']['name']
+            type2 = data['t']['type']
+            new1 = self.node_change_map[name1 + '@@@' + type1]
+            new2 = self.node_change_map[name2 + '@@@' + type2]
+            data['h']['type'] = new1.split('@@@')[-1]
+            data['t']['type'] = new2.split('@@@')[-1]  # 到此为止类型被更换完成了
+            self.rows_rel.append(data)
+            node1 = (data['h']['name'], data['h']['type'])
+            node2 = (data['t']['name'], data['t']['type'])
             self.nodeset.add(node1)
             self.nodeset.add(node2)
 
         counter = 0
-        for item in self.nodeset:
+        for item in self.nodeset:  # 构造初始的node字典
             node = {
                 'name': item[0],
                 'category': self.cate_map[item[1]],
-                'symbolSize': 10,
+                'symbolSize': 1,
                 'id': str(counter),
                 'x': random.random()*1200,
                 'y': random.random()*800,
-                'value': random.random()*100
+                'value': self.cate_map[item[1]]
             }
             counter += 1
             self.nodes_dict[item[0] + '@@@' + item[1]] = node
             # print(item[0] + '@@@' + item[1])
 
-        for data in self.rows_rel:
+        for data in self.rows_rel:  # 对关系中出现的所有节点进行计算个数
             a = data['h']['name'] + '@@@' + data['h']['type'].split('_')[-1]
             b = data['t']['name'] + '@@@' + data['t']['type'].split('_')[-1]
-
-            if self.nodes_dict[a]['symbolSize'] <= 40:  # 对重复的节点提高节点的大小
-                self.nodes_dict[a]['symbolSize'] += 3
-            if self.nodes_dict[b]['symbolSize'] <= 40:
-                self.nodes_dict[b]['symbolSize'] += 3
-
+            self.nodes_dict[a]['symbolSize'] += 1
+            self.nodes_dict[b]['symbolSize'] += 1
             link = {
                 'source': self.nodes_dict[a]['id'],
                 'target': self.nodes_dict[b]['id'],
@@ -130,7 +170,6 @@ class WordFilter:
             json.dump(echart_data, f)
         with open('./检查用/relation_filtered.json', 'w', encoding='utf-8') as f:
             json.dump(self.rows_rel, f)
-
 
     def save_ins_dict(self):
         """
