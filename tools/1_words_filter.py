@@ -60,9 +60,11 @@ class WordFilter:
             # words[i] = lemmatizer.lemmatize(words[i], pos='r')  # 副词
         name1 = ' '.join(words)
         # print(name1)
-
         # 解决首字母大小写
         name1 = name1.capitalize()
+        # todo 后续这里用一个changeMap 来代替多个if
+        # if name1 == 'Adakites':
+        #     name1 = 'Adakite'
         return name1
 
     def data_joiner(self, node):
@@ -82,6 +84,7 @@ class WordFilter:
                 self.node_type_dict[node['name']].append({'type': node['type'], 'num': 1})
 
     def gen_echart_data(self):
+        # todo 检查这一部分代码，进行一下 check，因为很容易出错
         for data in self.json_file:  # 这里去做一个过滤后数据的生成，添加一些echart中要用到的参数。
             data['h']['name'] = self.data_filter(data['h']['name']) # 替换成正确的名称和类型
             data['t']['name'] = self.data_filter(data['t']['name'])
@@ -123,11 +126,11 @@ class WordFilter:
             node = {
                 'name': item[0],
                 'category': self.cate_map[item[1]],
-                'symbolSize': 1,
+                'symbolSize': 10,
                 'id': str(counter),
                 'x': random.random()*1200,
                 'y': random.random()*800,
-                'value': self.cate_map[item[1]]
+                'value': random.random()*100
             }
             counter += 1
             self.nodes_dict[item[0] + '@@@' + item[1]] = node
@@ -152,7 +155,7 @@ class WordFilter:
             if link['source'] + '@@@' + link['target'] + '@@@' + link['value'] not in self.links_dict:  # 对重复的关系提高线的宽度
                 self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']] = link
             else:
-                self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width'] += 1
+                self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width'] += 2
 
         for key, value in self.nodes_dict.items():
             self.nodes.append(value)
@@ -187,6 +190,5 @@ class WordFilter:
 
 if __name__ == '__main__':
     a = WordFilter()
-    # a.data_filter('is')
     a.gen_echart_data()
     a.save_ins_dict()
