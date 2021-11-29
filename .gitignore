@@ -2,7 +2,6 @@
 tools/检查用/relation_filtered.json
 tools/raw_data
 tools/old_data
-tools/out_data/res_excel.xlsx
 tools/neo4j_data/instance.csv
 tools/neo4j_data/relation.csv
 model/ckpt/dde_cnn.pth.tar
