@@ -130,7 +130,7 @@ class WordFilter:
                 'id': str(counter),
                 'x': random.random()*1200,
                 'y': random.random()*800,
-                'value': random.random()*100
+                'value': item[1]
             }
             counter += 1
             self.nodes_dict[item[0] + '@@@' + item[1]] = node
@@ -189,7 +189,7 @@ class WordFilter:
 
 
 if __name__ == '__main__':
-    # a = WordFilter('./检查用/neo4j_use_relation.json')
-    a = WordFilter('./out_data/predict_result.json')
+    a = WordFilter('./检查用/neo4j_use_relation.json')
+    # a = WordFilter('./out_data/predict_result.json')
     a.gen_echart_data()
     a.save_ins_dict()
