@@ -7,7 +7,7 @@ class DataDivider:
 
     @staticmethod
     def divide_rel_data(wide):
-        data_file = open('模型用/relations.txt', encoding='utf-8')
+        data_file = open('raw_data_from_ner/relations.txt', encoding='utf-8')
         dde_test_file = open('../data/dde/dde_test.txt', 'w', encoding='utf-8')
         dde_train_file = open('../data/dde/dde_train.txt', 'w', encoding='utf-8')
         dde_val_file = open('../data/dde/dde_val.txt', 'w', encoding='utf-8')

@@ -22,7 +22,7 @@ class TestInference(unittest.TestCase):
                     '../.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar')
         model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
         sens = []
-        with open('../tools/模型用/关系预测数据.txt', encoding='utf-8') as f:
+        with open('../tools/raw_data_from_ner/rel_smart_ins_pair_no_rel.txt', encoding='utf-8') as f:
             while True:
                 temp = f.readline()
                 if not temp:
@@ -53,7 +53,7 @@ class TestInference(unittest.TestCase):
             }
             predict_result.append(result)
 
-        with open('../tools/out_data/predict_result.json', 'w', encoding='utf-8') as f:
+        with open('../tools/out_data/rel_smart_ins_pair_with_predict_rel_result.json', 'w', encoding='utf-8') as f:
             json.dump(predict_result, f)
             f.close()
 
@@ -192,7 +192,7 @@ class TestInference(unittest.TestCase):
                 r = data[i][1] / (data[i][1] + data[i][3])
                 ws1.cell(i + 2, 4).value = 2 * p * r / (p + r)
 
-        wb.save('../tools/out_data/res_excel.xlsx')
+        wb.save('../tools/out_data/nre_train_result.xlsx')
 
 
 if __name__ == '__main__':

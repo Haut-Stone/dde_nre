@@ -41,6 +41,17 @@ class WordFilter:
             {'name': 'DEEP'},
             {'name': 'ELEM'},
         ]
+        self.rel_color_map = {
+            'Instrument-Agency': '#ea7070',
+            'Cause-Effect': '#fdc4b6',
+            'Product-Producer': '#e59572',
+            'Content-Container': '#2694ab',
+            'Entity-Origin': '#a8dba8',
+            'Entity-Destination': '#f6d04d',
+            'Component-Whole': '#3f3f3f',
+            'Member-Collection': '#a696c8',
+            'Message-Topic': '#004d61',
+        }
 
     @staticmethod
     def data_filter(name):
@@ -146,6 +157,7 @@ class WordFilter:
                 'target': self.nodes_dict[b]['id'],
                 'value': data['relation'],
                 'lineStyle': {
+                    'color': self.rel_color_map[data['relation']],
                     'width': 1
                 },
                 'label': {
@@ -169,7 +181,7 @@ class WordFilter:
         }
         # rel_pair.add((data['h']['name'], data['t']['name']))
 
-        with open('./检查用/echart_use_data.json', 'w', encoding='utf-8') as f:
+        with open('raw_data_send_to_show/echart_use_data_marked.json', 'w', encoding='utf-8') as f:
             json.dump(echart_data, f)
         with open('./检查用/relation_filtered.json', 'w', encoding='utf-8') as f:
             json.dump(self.rows_rel, f)
@@ -189,7 +201,7 @@ class WordFilter:
 
 
 if __name__ == '__main__':
-    a = WordFilter('./检查用/neo4j_use_relation.json')
-    # a = WordFilter('./out_data/predict_result.json')
+    a = WordFilter('raw_data_from_ner/rel_marked_neo4j_can_use.json')
+    # a = WordFilter('./out_data/rel_smart_ins_pair_with_predict_rel_result.json')
     a.gen_echart_data()
     a.save_ins_dict()
