@@ -13,14 +13,16 @@ class DataDivider:
         dde_val_file = open('../data/dde/dde_val.txt', 'w', encoding='utf-8')
 
         counter = 0
-
+        line = 0
         while True:
             data = data_file.readline()
             if not data:
                 break
             counter = (counter + 1) % wide  # 8:1:1 划分
             if counter < 8:
-                dde_train_file.write(data)
+                if line < 8000000:
+                    dde_train_file.write(data)
+                    line += 1
             elif counter < 9:
                 dde_test_file.write(data)
             else:

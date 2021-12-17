@@ -4,7 +4,7 @@ import json
 import shutil
 from openpyxl import Workbook
 from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
-
+import random
 
 wb = Workbook()
 wb.create_sheet('分类准确率，召回率，f1值')
@@ -22,20 +22,48 @@ class TestInference(unittest.TestCase):
                     '../.opennre/pretrain/nre/dde_bert-base-uncased_entity.pth.tar')
         model = opennre.get_model(model_name)  # 使用 dde cnn 来训练数据
         sens = []
-        with open('../tools/raw_data_from_ner/rel_smart_ins_pair_no_rel.txt', encoding='utf-8') as f:
+
+        ins_pair_set = set()
+        # 新建过滤器过滤掉一些无用的实体对
+        with open('../tools/raw_data_from_ner/relations.txt', encoding='utf-8') as f:
             while True:
                 temp = f.readline()
                 if not temp:
                     break
                 foo = eval(temp)
                 line = json.dumps(foo)
-                sens.append(json.loads(line))
+                fuk = json.loads(line)
+                ins_pair = (fuk['h']['name'].lower(), fuk['t']['name'].lower())
+                if ins_pair not in ins_pair_set:
+                    ins_pair_set.add(ins_pair)
+        print(len(ins_pair_set))
+        with open('../tools/raw_data_from_ner/rel_smart_ins_pair_no_rel.txt', encoding='utf-8') as f:
+            counter = 0
+            while True:
+                temp = f.readline()
+                if not temp:
+                    break
+                print(counter)
+                counter += 1
+                foo = eval(temp)
+                line = json.dumps(foo)
+                fuk = json.loads(line)
+                if len(fuk['token']) > 600:  # 如果过长那这一条就要丢弃掉
+                    continue
+                # if counter > 50:
+                #     break
+                # ins_pair = (fuk['h']['name'].lower(), fuk['t']['name'].lower())
+                # if ins_pair in ins_pair_set:
+                # rad = 5 * random.random()
+                # if rad >= 4:  # 随机取一部分数据
+                sens.append(fuk)
+        # print(len(sens))
 
         predict_result = []
         for sen in sens:
             result = model.infer(sen)
-            print('识别句子：', ' '.join(sen['token']))
-            print('实际关系三元组：', sen['h']['name'] + ' / ' + sen['t']['name'] + ' / ' + sen['relation'])
+            # print('识别句子：', ' '.join(sen['token']))
+            # print('实际关系三元组：', sen['h']['name'] + ' / ' + sen['t']['name'] + ' / ' + sen['relation'])
             print('预测关系和概率：', result)
             result = {
                 'token': sen['token'],
@@ -49,7 +77,8 @@ class TestInference(unittest.TestCase):
                     'pos': sen['t']['pos'],
                     'type': sen['t']['type']
                 },
-                'relation': result[0]
+                'relation': result[0],
+                'confidence': result[1]
             }
             predict_result.append(result)
 

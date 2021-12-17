@@ -97,7 +97,7 @@ class WordFilter:
     def gen_echart_data(self):
         # todo 检查这一部分代码，进行一下 check，因为很容易出错
         for data in self.json_file:  # 这里去做一个过滤后数据的生成，添加一些echart中要用到的参数。
-            data['h']['name'] = self.data_filter(data['h']['name']) # 替换成正确的名称和类型
+            data['h']['name'] = self.data_filter(data['h']['name'])  # 替换成正确的名称和类型
             data['t']['name'] = self.data_filter(data['t']['name'])
             data['h']['type'] = data['h']['type'].split('_')[-1]
             data['t']['type'] = data['t']['type'].split('_')[-1]
@@ -118,6 +118,9 @@ class WordFilter:
                 self.node_change_map[pre + node_type['type']] = pre + max_num_type
 
         for data in self.json_file:
+            # 这里添加过滤
+            if data['relation'] == 'NA':
+                continue
             name1 = data['h']['name']
             type1 = data['h']['type']
             name2 = data['t']['name']
@@ -137,7 +140,7 @@ class WordFilter:
             node = {
                 'name': item[0],
                 'category': self.cate_map[item[1]],
-                'symbolSize': 10,
+                'symbolSize': 1,
                 'id': str(counter),
                 'x': random.random()*1200,
                 'y': random.random()*800,
@@ -147,11 +150,18 @@ class WordFilter:
             self.nodes_dict[item[0] + '@@@' + item[1]] = node
             # print(item[0] + '@@@' + item[1])
 
+        print('一共有：', len(self.rows_rel), '条关系')
+        max_size = 1
+        max_width = 1
         for data in self.rows_rel:  # 对关系中出现的所有节点进行计算个数
             a = data['h']['name'] + '@@@' + data['h']['type'].split('_')[-1]
             b = data['t']['name'] + '@@@' + data['t']['type'].split('_')[-1]
             self.nodes_dict[a]['symbolSize'] += 1
             self.nodes_dict[b]['symbolSize'] += 1
+            if self.nodes_dict[a]['symbolSize'] > max_size:
+                max_size = self.nodes_dict[a]['symbolSize']
+            if self.nodes_dict[b]['symbolSize'] > max_size:
+                max_size = self.nodes_dict[b]['symbolSize']
             link = {
                 'source': self.nodes_dict[a]['id'],
                 'target': self.nodes_dict[b]['id'],
@@ -167,7 +177,11 @@ class WordFilter:
             if link['source'] + '@@@' + link['target'] + '@@@' + link['value'] not in self.links_dict:  # 对重复的关系提高线的宽度
                 self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']] = link
             else:
-                self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width'] += 2
+                self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width'] += 1
+                if max_width < self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width']:
+                    max_width = self.links_dict[link['source'] + '@@@' + link['target'] + '@@@' + link['value']]['lineStyle']['width']
+        print(max_size)
+        print(max_width)
 
         for key, value in self.nodes_dict.items():
             self.nodes.append(value)
@@ -175,13 +189,15 @@ class WordFilter:
             self.links.append(value)
 
         echart_data = {
+            'maxSize': max_size,
+            'maxWidth': max_width,
             'nodes': self.nodes,
             'links': self.links,
             'categories': self.category
         }
         # rel_pair.add((data['h']['name'], data['t']['name']))
 
-        with open('raw_data_send_to_show/echart_use_data_marked.json', 'w', encoding='utf-8') as f:
+        with open('raw_data_send_to_show/echart_use_data_predict.json', 'w', encoding='utf-8') as f:
             json.dump(echart_data, f)
         with open('./检查用/relation_filtered.json', 'w', encoding='utf-8') as f:
             json.dump(self.rows_rel, f)
@@ -201,7 +217,7 @@ class WordFilter:
 
 
 if __name__ == '__main__':
-    a = WordFilter('raw_data_from_ner/rel_marked_neo4j_can_use.json')
-    # a = WordFilter('./out_data/rel_smart_ins_pair_with_predict_rel_result.json')
+    # a = WordFilter('raw_data_from_ner/rel_marked_neo4j_can_use.json')
+    a = WordFilter('./out_data/rel_smart_ins_pair_with_predict_rel_result.json')
     a.gen_echart_data()
     a.save_ins_dict()

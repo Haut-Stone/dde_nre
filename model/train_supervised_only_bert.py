@@ -1,6 +1,6 @@
 """
 不添加 attention 机制的普通 bert 有监督学习
-效果非常的显著！！达到了 60% 的
+效果非常的显著！！达到了 72% 的
 """
 
 import torch
@@ -57,9 +57,9 @@ parser.add_argument('--batch_size', default=30, type=int,  # 这里原始的值�
                     help='Batch size')
 parser.add_argument('--lr', default=2e-5, type=float,
                     help='Learning rate')
-parser.add_argument('--max_length', default=160, type=int,  # 默认是128
+parser.add_argument('--max_length', default=200, type=int,  # 默认是128
                     help='Maximum sentence length')
-parser.add_argument('--max_epoch', default=40, type=int,  # 默认是 3
+parser.add_argument('--max_epoch', default=20, type=int,  # 默认是 3
                     help='Max number of training epochs')
 
 # Seed
